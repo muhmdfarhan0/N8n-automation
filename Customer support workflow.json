@@ -1,0 +1,408 @@
+{
+  "name": "Customer support workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {},
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "ea59ac39-fd2b-467f-852f-91d5a40ea260",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YKO185QwXq3ZyIMs",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputText": "={{ $json.text }}",
+        "categories": {
+          "categories": [
+            {
+              "category": "Tech team",
+              "description": "What is overview of this project?"
+            },
+            {
+              "category": "Other",
+              "description": "not related to Project"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textClassifier",
+      "typeVersion": 1.1,
+      "position": [
+        220,
+        -20
+      ],
+      "id": "788a7fe3-c44c-4928-b9df-bebd70480b4b",
+      "name": "Text Classifier"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        140,
+        200
+      ],
+      "id": "22d1739f-c78e-4892-ab8f-63ce41680590",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "WY9WmSWGbuTLeI3L",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        400,
+        460
+      ],
+      "id": "f095ba62-0bcc-4561-a573-47c6f776d9ca",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Call this tool to get Knowledge of scraping Project",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "newembb",
+          "mode": "list",
+          "cachedResultName": "newembb"
+        },
+        "includeDocumentMetadata": false,
+        "options": {
+          "pineconeNamespace": "FAQ"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.3,
+      "position": [
+        840,
+        240
+      ],
+      "id": "b934fb63-f109-40c9-a96d-a34455415f1b",
+      "name": "Pinecone Vector Store",
+      "credentials": {
+        "pineconeApi": {
+          "id": "5ALETwFU0Bed2iBM",
+          "name": "PineconeApi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        920,
+        460
+      ],
+      "id": "e1f3fc3b-40ee-4df7-996d-fe3d165a0623",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "WY9WmSWGbuTLeI3L",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        640,
+        240
+      ],
+      "id": "13b36d8d-1fa5-4aeb-846a-9f44dd4485c7",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "WY9WmSWGbuTLeI3L",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.text }}",
+        "options": {
+          "systemMessage": "You are the agent and your task is to give response to the user \n-give response using emojis\n-The response should be related with the context\n-you have to look in to pinecone before answering"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        640,
+        0
+      ],
+      "id": "cb0f789c-31ce-402c-97c4-3911fa5c61fe",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "operation": "reply",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "emailType": "text",
+        "message": "={{ $('AI Agent').item.json.output }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1300,
+        0
+      ],
+      "id": "3b5f777d-1a1f-49ad-9c13-c14c1f7c6d38",
+      "name": "Reply to a message",
+      "webhookId": "cfa928ae-8fff-4ed9-b7c2-659c96ad506a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YKO185QwXq3ZyIMs",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "IMPORTANT"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1000,
+        0
+      ],
+      "id": "a5ee7837-6a85-439a-9c62-2c49a85f7770",
+      "name": "Add label to message",
+      "webhookId": "ee052fb2-038d-4d5b-9c3f-33eff1dda10e",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YKO185QwXq3ZyIMs",
+          "name": "Gmail account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Gmail Trigger": [
+      {
+        "json": {
+          "id": "197fea28f50a550c",
+          "threadId": "197fea28f50a550c",
+          "labelIds": [
+            "UNREAD",
+            "IMPORTANT",
+            "CATEGORY_PERSONAL",
+            "INBOX"
+          ],
+          "sizeEstimate": 6174,
+          "headers": {
+            "delivered-to": "Delivered-To: muhammadfarhan03333@gmail.com",
+            "received": "Received: from mail-sor-f41.google.com (mail-sor-f41.google.com. [209.85.220.41])\r\n        by mx.google.com with SMTPS id 98e67ed59e1d1-31c3eb73eaasor4937484a91.6.2025.07.12.05.35.55\r\n        for <muhammadfarhan03333@gmail.com>\r\n        (Google Transport Security);\r\n        Sat, 12 Jul 2025 05:35:55 -0700 (PDT)",
+            "x-received": "X-Received: by 2002:a17:90b:5105:b0:311:f2f6:44ff with SMTP id\r\n 98e67ed59e1d1-31c4f573304mr9565017a91.17.1752323755046; Sat, 12 Jul 2025\r\n 05:35:55 -0700 (PDT)",
+            "arc-seal": "ARC-Seal: i=1; a=rsa-sha256; t=1752323755; cv=none;\r\n        d=google.com; s=arc-20240605;\r\n        b=V81BCU4yYnTi+d9uluFUpAvsGKDAv1US5gqM0QCm8qmtjey3SA8kvJ/DU4gcXvq8An\r\n         BlZHakyWxIwhvMn42U/17G8004EaN8UbzCry+DMNFWgqKQEzkbrnYV4IyjBeOZYi0H5J\r\n         UIUGreENnbbR44J4ecSW/3Vxt9RMsMJ0G5uCVZ2/UAs7Y8qyxrU/DX72KeFyT1hsY06M\r\n         nSxJnYz3azrqAzamWtCtM7YAgQ4RzqwfzO1SHmnsw/c4pIqXR9DMHO+Mm65NOBntZWFv\r\n         cVXQqicTtqNdt15vnbJM6RNuMu6EbgTvaWqfx1ConUkt1bTPKSfVM2w07xmp9paH9N+U\r\n         28yA==",
+            "arc-message-signature": "ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20240605;\r\n        h=to:subject:message-id:date:from:mime-version:dkim-signature;\r\n        bh=jtvjR1+4AqZ8uWS4CYy0BtKGd9J04fiebGu6DROgBjA=;\r\n        fh=oE6SqHKZHXhRw3DN2LggwV6isQ9sQM9xPyIO1A0PNGE=;\r\n        b=CoXx89hmzTCAC9W5NphAoVrW/dMgOR2mLDfSvaZMsnD1uQyrykBuyT07MqlVcf4RqE\r\n         AspFBZxBfS+bxl0fvTafuKjlZRseAmKJsrQuZqkK5MexvW/pmhRRu0YR/M6iiX3ubI70\r\n         Lw2vj+hz1afXuhxTqMrMlbXwltv0hMSQtqeJZkrCj5R+nvIrAExAonsk8JyAcblbvWFL\r\n         /ng0vHvUIqMWbd0XWYRm4m4MOr1Z2qrAWNIAvOHgGwxcBbXwHBCnyfkpi6QOEumSjy6l\r\n         8zjSPPFheO/5p413VT52ak5M+jb/RrwoMzZ/6IFlsPJNd2wdL91b5JS5Qm0C0clfrKft\r\n         LYnQ==;\r\n        dara=google.com",
+            "arc-authentication-results": "ARC-Authentication-Results: i=1; mx.google.com;\r\n       dkim=pass header.i=@gmail.com header.s=20230601 header.b=MnanqQ5U;\r\n       spf=pass (google.com: domain of rajafarhanraja075@gmail.com designates 209.85.220.41 as permitted sender) smtp.mailfrom=rajafarhanraja075@gmail.com;\r\n       dmarc=pass (p=NONE sp=QUARANTINE dis=NONE) header.from=gmail.com;\r\n       dara=pass header.i=@gmail.com",
+            "return-path": "Return-Path: <rajafarhanraja075@gmail.com>",
+            "received-spf": "Received-SPF: pass (google.com: domain of rajafarhanraja075@gmail.com designates 209.85.220.41 as permitted sender) client-ip=209.85.220.41;",
+            "authentication-results": "Authentication-Results: mx.google.com;\r\n       dkim=pass header.i=@gmail.com header.s=20230601 header.b=MnanqQ5U;\r\n       spf=pass (google.com: domain of rajafarhanraja075@gmail.com designates 209.85.220.41 as permitted sender) smtp.mailfrom=rajafarhanraja075@gmail.com;\r\n       dmarc=pass (p=NONE sp=QUARANTINE dis=NONE) header.from=gmail.com;\r\n       dara=pass header.i=@gmail.com",
+            "dkim-signature": "DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;\r\n        d=gmail.com; s=20230601; t=1752323755; x=1752928555; dara=google.com;\r\n        h=to:subject:message-id:date:from:mime-version:from:to:cc:subject\r\n         :date:message-id:reply-to;\r\n        bh=jtvjR1+4AqZ8uWS4CYy0BtKGd9J04fiebGu6DROgBjA=;\r\n        b=MnanqQ5UahwBfInW66CnyW0XLaMGHa2N0UhvcTwFEMxZDkjsLNmWwlqtL67THfMohO\r\n         JRQt6y5L6PQ0Pc+/VG8l9SxGgikdqQ5l37j2qPQ3o9/+G659oh+CSA0GKs4OLFXz10Cn\r\n         UKd2mp09UpwC4ZlEjemUPi7b4m2uZdNo3oawT4JPYsFbAWe8aJ7+lljyTlkbA2vFXH84\r\n         tYvYiBd0bXzDGWRK8v8v6q/+rRYLz890gUL9sCvY2DgSu4c529GfIK1szLE1JZQZ5PmM\r\n         Ob00xWUxQf0H0EqelQJZa/ceEVtDVkgymdnAQ3K65PyBBQ//PDQln6aYY1Kfa+lS30q/\r\n         t2Vw==",
+            "x-google-dkim-signature": "X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;\r\n        d=1e100.net; s=20230601; t=1752323755; x=1752928555;\r\n        h=to:subject:message-id:date:from:mime-version:x-gm-message-state\r\n         :from:to:cc:subject:date:message-id:reply-to;\r\n        bh=jtvjR1+4AqZ8uWS4CYy0BtKGd9J04fiebGu6DROgBjA=;\r\n        b=l42nozoASYUWedWTYerBt1M0Ap08Kil8zELDiWKm6OBL0GSgDou1ZlsIkfz1Qd6Iob\r\n         vhuxCNP0rFUP/kZ73Qt6Io3Cygf5L6lsFhx+jkMGsg8bzFck3VBiWpkYMHkH1B66R2RB\r\n         bi760AOWUcQKz6XBcytz3TwKwDvsPZHpXegYXr2K0d9wt5LvATLkpoL6AT1kzcwBPjHL\r\n         SmA4TmtyTcAHXRQB8rcbSz6E6WadnbqMYPJOyKL0rXua01n4OpVX9mG5QqTup5zs4JY7\r\n         t9tzQee73TO2LOkddvEXS1XmxW5ruzepxvSDNjE1uBPbMsgB0BdpSlp5UEYCD181eo5E\r\n         qW2A==",
+            "x-gm-message-state": "X-Gm-Message-State: AOJu0YxdwbTekYfHc4P7sgLsFm06M+tnEDqhA1BQqaneCFB8I3i3O6rT\r\n\tthCEd87j31FwL+CaiO1qhF88pLbQXiAsdtGwtxxKbqOdBtG6J/A9xHje5UveVCZ8bES0Em7Rcyf\r\n\t8GgjqMmgYDUpLVvFW7t7a/iMH50sCV6JGkLMv",
+            "x-gm-gg": "X-Gm-Gg: ASbGncv3zFHLxfPAeXnX1g1mwAN7HgSj1lv4ltGSTOBHfTKNa45gDmvBxpnxA26hFvA\r\n\tIqn5JVPRmZ9WR4ujxni3gWB7a6SlcTQ39l3mo/LUQSw/62bSMvaCXXa458Awrym8FnBMA6Herk9\r\n\tmyqQVyROzD7iKSXViReldIMJ8EOo+v46djnBzwGOS43CYUiJOYzi9OeF9acTp9Ou9htOPzVXHzX\r\n\tuKm",
+            "x-google-smtp-source": "X-Google-Smtp-Source: AGHT+IFTescIfJKJspzXOGyG91GMekhPaVfFgNXkFEDbbPGDLHqz59OZRIAEHogCheVKH4atjIhyAKD+lo429CaPuQA=",
+            "mime-version": "MIME-Version: 1.0",
+            "from": "From: Raja Farhan <rajafarhanraja075@gmail.com>",
+            "date": "Date: Sat, 12 Jul 2025 17:35:44 +0500",
+            "x-gm-features": "X-Gm-Features: Ac12FXwG5ps-TTSAQ2Ad3IuXCjyI_yOFTAFPO9t23OmZ804HaacSbinEd1c_tGI",
+            "message-id": "Message-ID: <CAMfSGrnYXEezwah9e+ZCy2z_1DtFwr2uXnwyHQB_DsqZDpqHdQ@mail.gmail.com>",
+            "subject": "Subject: ",
+            "to": "To: \"muhammadfarhan03333@gmail.com\" <muhammadfarhan03333@gmail.com>",
+            "content-type": "Content-Type: multipart/alternative; boundary=\"000000000000f37b130639baaabb\""
+          },
+          "html": "<div dir=\"ltr\">Hey, I am Farhan from techhead. I want you to know about the scraping project that you will use for this project and also please explain to me this whole project in detail so that I can have knowledge about the project.<br>Thanks<br>Farhan M.</div>\n",
+          "text": "Hey, I am Farhan from techhead. I want you to know about the scraping\nproject that you will use for this project and also please explain to me\nthis whole project in detail so that I can have knowledge about the project.\nThanks\nFarhan M.\n",
+          "textAsHtml": "<p>Hey, I am Farhan from techhead. I want you to know about the scraping<br/>project that you will use for this project and also please explain to me<br/>this whole project in detail so that I can have knowledge about the project.<br/>Thanks<br/>Farhan M.</p>",
+          "date": "2025-07-12T12:35:44.000Z",
+          "to": {
+            "value": [
+              {
+                "address": "muhammadfarhan03333@gmail.com",
+                "name": ""
+              }
+            ],
+            "html": "<span class=\"mp_address_group\"><a href=\"mailto:muhammadfarhan03333@gmail.com\" class=\"mp_address_email\">muhammadfarhan03333@gmail.com</a></span>",
+            "text": "muhammadfarhan03333@gmail.com"
+          },
+          "from": {
+            "value": [
+              {
+                "address": "rajafarhanraja075@gmail.com",
+                "name": "Raja Farhan"
+              }
+            ],
+            "html": "<span class=\"mp_address_group\"><span class=\"mp_address_name\">Raja Farhan</span> &lt;<a href=\"mailto:rajafarhanraja075@gmail.com\" class=\"mp_address_email\">rajafarhanraja075@gmail.com</a>&gt;</span>",
+            "text": "\"Raja Farhan\" <rajafarhanraja075@gmail.com>"
+          },
+          "messageId": "<CAMfSGrnYXEezwah9e+ZCy2z_1DtFwr2uXnwyHQB_DsqZDpqHdQ@mail.gmail.com>"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text Classifier": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pinecone Vector Store": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Add label to message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add label to message": {
+      "main": [
+        [
+          {
+            "node": "Reply to a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "178d38f9-daab-4d48-9a6b-dc90dfbfcd0e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f1ab73838507e31bc422aeea14e8cdd1cfde5918dc8e3dc5d971a3f07dcfb5a1"
+  },
+  "id": "CE1EaGZLMzRu8qIj",
+  "tags": []
+}
